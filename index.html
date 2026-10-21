@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Stil Finance: controle de entradas e saídas da casa, direto no navegador.">
+    <meta name="theme-color" content="#10202b">
+    <title>Controle Financeiro</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- Topo -->
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-mark"><i class="fa-solid fa-chart-line"></i></div>
+                <div>
+                    <h1>Gerenciamento Casa</h1>
+                    <p>Stil Finance</p>
+                </div>
+            </div>
+            <div class="topbar-actions">
+                <span class="periodo" id="periodo-atual"><i class="fa-regular fa-calendar"></i><span></span></span>
+                <button type="button" class="btn-ghost" id="btn-exportar" title="Baixar backup dos dados">
+                    <i class="fa-solid fa-download"></i><span>Exportar</span>
+                </button>
+                <button type="button" class="btn-ghost" id="btn-importar" title="Restaurar dados de um backup">
+                    <i class="fa-solid fa-upload"></i><span>Importar</span>
+                </button>
+                <input type="file" id="arquivo-importar" accept="application/json,.json" hidden>
+            </div>
+        </header>
+
+        <!-- Resumo -->
+        <section class="resumo" aria-label="Resumo do mês">
+            <div class="saldo">
+                <div class="saldo-label"><i class="fa-solid fa-wallet"></i> Saldo disponível</div>
+                <div id="saldo-total" class="saldo-valor num">R$ 0,00</div>
+            </div>
+            <div class="fluxo">
+                <div class="fluxo-linhas">
+                    <div class="fluxo-item">
+                        <small><i class="fa-solid fa-arrow-trend-up ic-in"></i> Entradas do mês</small>
+                        <strong id="total-entradas" class="num">R$ 0,00</strong>
+                    </div>
+                    <div class="fluxo-item">
+                        <small><i class="fa-solid fa-arrow-trend-down ic-out"></i> Saídas do mês</small>
+                        <strong id="total-saidas" class="num">R$ 0,00</strong>
+                    </div>
+                </div>
+                <div class="barra" aria-hidden="true">
+                    <span class="b-in" id="barra-in"></span>
+                    <span class="b-out" id="barra-out"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Formulário -->
+        <section class="card" id="form-container">
+            <div class="card-head">
+                <h2><i class="fa-solid fa-pen-to-square" id="form-icon"></i> <span id="form-title">Nova
+                        movimentação</span></h2>
+                <span class="hint" id="form-hint">Registre uma entrada ou saída</span>
+            </div>
+            <div class="form-body">
+                <form id="finance-form" autocomplete="off">
+                    <input type="hidden" id="edit-id">
+                    <input type="hidden" id="tipo-op" value="entrada">
+
+                    <div class="segmento" role="group" aria-label="Tipo de movimentação">
+                        <button type="button" class="ativo" data-tipo="entrada" aria-pressed="true">
+                            <i class="fa-solid fa-arrow-down"></i> Entrada
+                        </button>
+                        <button type="button" data-tipo="saída" aria-pressed="false">
+                            <i class="fa-solid fa-arrow-up"></i> Saída
+                        </button>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="valor">Valor</label>
+                            <div class="campo">
+                                <span class="prefixo">R$</span>
+                                <input type="number" id="valor" step="0.01" min="0" required placeholder="0,00"
+                                    inputmode="decimal">
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="fields-entrada-pessoa">
+                            <label for="pessoa">Quem enviou</label>
+                            <div class="campo">
+                                <i class="fa-regular fa-user prefixo-ic"></i>
+                                <input type="text" id="pessoa" placeholder="Nome do remetente" class="com-icone">
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="fields-saida" hidden>
+                            <label for="justificativa">Justificativa do gasto</label>
+                            <div class="campo">
+                                <i class="fa-regular fa-comment-dots prefixo-ic"></i>
+                                <input type="text" id="justificativa" placeholder="Ex: Fornecedor X" class="com-icone">
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="fields-entrada-forma">
+                            <label for="forma">Forma</label>
+                            <select id="forma">
+                                <option value="Pix">Pix</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                            </select>
+                        </div>
+
+                        <div class="btn-container">
+                            <button type="submit" id="btn-submit" class="btn btn-in"><i class="fa-solid fa-plus"></i>
+                                Adicionar</button>
+                            <button type="button" id="btn-save" class="btn btn-save" hidden><i
+                                    class="fa-solid fa-floppy-disk"></i> Salvar alterações</button>
+                            <button type="button" id="btn-cancel" class="btn btn-cancel" hidden><i
+                                    class="fa-solid fa-xmark"></i> Cancelar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Movimentações do mês -->
+        <section class="card">
+            <div class="card-head">
+                <h2><i class="fa-solid fa-list-ul"></i> Movimentações do mês atual</h2>
+                <span class="hint" id="contagem-mov"></span>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Descrição</th>
+                            <th>Data</th>
+                            <th>Forma</th>
+                            <th class="right">Valor</th>
+                            <th class="right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historico-corpo"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Arquivo -->
+        <section class="card">
+            <div class="card-head">
+                <h2><i class="fa-solid fa-box-archive"></i> Meses anteriores</h2>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mês de referência</th>
+                            <th class="right">Entradas</th>
+                            <th class="right">Saídas</th>
+                            <th class="right">Saldo de fechamento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historico-meses-corpo"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer class="rodape">
+            <i class="fa-solid fa-lock"></i>
+            Seus dados ficam apenas neste navegador. Use <strong>Exportar</strong> para guardar um backup.
+        </footer>
+
+    </div>
+
+    <div class="toast-area" id="toast-area" aria-live="polite"></div>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>
